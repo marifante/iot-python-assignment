@@ -4,47 +4,86 @@ A minimal EcoAdapt modbus reader
 """
 
 import logging
+import asyncio
+import websockets
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
+
 # configure the client logging
-FORMAT = (
-    "%(asctime)-15s %(threadName)-15s "
-    "%(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
-)
-logging.basicConfig(format=FORMAT)
-log = logging.getLogger()
-log.setLevel(logging.INFO)
-
-UNIT = 0x1
-ADDRESS = "169.254.20.1"
+log = logging.getLogger(__name__)
 
 
-def run_sync_client():
-    log.info("Setting up client")
-    client = ModbusClient(ADDRESS, port=502)
-    client.connect()
+class EcoAdaptModbus:
+    """ Class used to listen to EcoAdapt device and expose it's data through a queue. """
 
-    log.info("Reading registers")
-    read_registers = [
-        (0, 1),
-        (1, 1),
-        (2, 3),
-        (244, 12),
-        (352, 12),
-        (388, 12),
-        (424, 12),
-    ]
-    for r in read_registers:
-        resp = client.read_input_registers(r[0], r[1], unit=UNIT)
-        log.info("%s: %s: %s" % (r, resp, resp.registers))
+    def __init__(self, address: str, port: int, unit):
+        """ Constructor of the the class who is in charge to gather data from EcoAdapt device.
 
-    log.info("Closing client")
-    client.close()
+        :param address: Modbus IP address.
+        :param port: Modbus port.
+        :param unit: Modbus unit.
+        """
+        self.address = address
+        self.port = port
+        self.unit = unit
+
+    def run_sync_client(self):
+        log.info("Setting up client")
+        client = ModbusClient(self.address, port=self.port)
+        client.connect()
+
+        log.info("Reading registers")
+        read_registers = [
+            (0, 1),
+            (1, 1),
+            (2, 3),
+            (244, 12),
+            (352, 12),
+            (388, 12),
+            (424, 12),
+        ]
+        for r in read_registers:
+            resp = client.read_input_registers(r[0], r[1], unit=self.unit)
+            log.info("%s: %s: %s" % (r, resp, resp.registers))
+
+        log.info("Closing client")
+        client.close()
 
 
-if __name__ == "__main__":
-    run_sync_client()
+class WebSocketClient:
+    def __init__(self, url: str):
+        """ Initialize the WebSocket client with the server URL.
 
+        :param url: server URL
+        """
+        self.url = url
+
+    async def send_message(self, message: str):
+        """Send a message to the WebSocket server.
+
+        :param message: the message to send to the websocket server.
+        """
+        try:
+            async with websockets.connect(self.url) as websocket:
+                await websocket.send(message)
+                response = await websocket.recv()
+                log.info(f"Received from server: {response}")
+        except Exception as e:
+            log.error(f"WebSocket error: {e}")
+
+    def send(self, message: str):
+        """Run the async send_message method in an event loop.
+
+        :param message: the message to send to the websocket server.
+        """
+        asyncio.run(self.send_message(message))
+
+
+
+class EcoAd
+#if __name__ == "__main__":
+#    run_sync_client()
+#
 """"
 Output when ran:
 >> python3 ./src/exporter-ecoadapt/exporter-ecoadapt.py 

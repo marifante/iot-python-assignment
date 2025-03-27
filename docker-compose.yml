@@ -1,0 +1,36 @@
+services:
+
+  ecoadapt_power_elec:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ecoadapt_power_elec_fake
+      args:
+        MODBUS_IP: "172.18.0.2"
+    networks:
+      custom_network:
+        ipv4_address: 172.18.0.2
+
+  #  exporter_ecoadapt:
+  #    build:
+  #      context: .
+  #      dockerfile: docker/Dockerfile.exporter_ecoadapt
+  #    networks:
+  #      custom_network:
+  #        ipv4_address: 172.18.0.3
+
+  cloud_server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.cloud_server
+    networks:
+      custom_network:
+        ipv4_address: 172.18.0.4
+    command: ["--addr", "172.18.0.4", "--port", "9000"]
+
+
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.18.0.0/16"

@@ -28,10 +28,20 @@
 # A local webserver to receive message sent by exporter. For dev and debugging only!
 #
 
+import logging
 import asyncio
 import argparse
 
 from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
+
+FORMAT = (
+    "%(asctime)-15s %(threadName)-15s "
+    "%(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
+)
+
+logging.basicConfig(format=FORMAT, level=logging.INFO)
+
+log = logging.getLogger(__name__)
 
 
 class MyServerProtocol(WebSocketServerProtocol):
@@ -42,29 +52,32 @@ class MyServerProtocol(WebSocketServerProtocol):
         return ""
 
     async def onOpen(self):
-        print("WebSocket connection open.")
+        log.info("WebSocket connection open.")
 
     def onMessage(self, payload, isBinary):
         if isBinary:
-            print("Binary message received: {0} bytes".format(len(payload)))
+            log.info("Binary message received: {0} bytes".format(len(payload)))
         else:
-            print("Text message received: {0}".format(payload.decode("utf8")))
+            log.info("Text message received: {0}".format(payload.decode("utf8")))
 
     def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: {0}".format(reason))
+        log.info("WebSocket connection closed: {0}".format(reason))
+
+
+def parse_args():
+    """ Parse arguments given to this CLI. """
+    parser = argparse.ArgumentParser(description="A local websocket server that receives and prints messages")
+    parser.add_argument("--port", "-p", help="Port to serve (default 9000)", type=int, default=9000)
+    parser.add_argument("--addr", "-a", help="IP address to mount the serverPort to serve", type=int, required=True)
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="A local websocket server that receives and prints messages"
-    )
-    parser.add_argument(
-        "--port", "-p", help="Port to serve (default 9000)", type=int, default=9000
-    )
+    args = parse_args()
 
-    args = parser.parse_args()
-    server_url = f"ws://127.0.0.1:{args.port}"
-    print(f"Starting server on {server_url}")
+    server_url = f"ws://{args.addr}:{args.port}"
+    log.info(f"Starting server on {server_url}")
     factory = WebSocketServerFactory(server_url)
     factory.protocol = MyServerProtocol
 
@@ -75,7 +88,7 @@ if __name__ == "__main__":
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        print("Interrupted! Closing server.")
+        log.warning("Interrupted! Closing server.")
     finally:
         server.close()
         loop.close()

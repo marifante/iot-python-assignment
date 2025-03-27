@@ -1,0 +1,9 @@
+FROM python:3.7.4-slim
+
+WORKDIR /app
+
+COPY requirements-dev.txt dev/server.py /app/
+
+RUN pip install --no-cache-dir -r /app/requirements-dev.txt
+
+CMD ["python", "/app/server.py"]
