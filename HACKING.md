@@ -35,6 +35,17 @@ To run the integration test we shall only run: `docker-compose up --build` from 
 
 3) Application layout.
 
+So, the application needs to do 2 things:
+* Read data from modbus
+* Send data to a cloud server
+
+This seems to be the case for a concurrent/parallel programming thing.
+Naturally, this is a I/O-bound application, since we will be reading from one place (modbus device) and sending that data to other place (cloud server using websockets).
+Also, between each "read" to the modbus device we will wait some time, so the thread running this application will have some idle time. This seems to be a good use case for asyncio.
+
+So, I'll create a simple application that runs 2 tasks in an asyncio loop:
+* One task that will read through modbus the data of the device and will put it in a queue.
+* Other task that will read the data from the queue and send it to the websocket.
 
 
 4) Bonus (CI/CD): Since I love to work with automated tests, I'll create a small GitHub actions pipeline to run the unit-tests of the application and some integration tests using the mocked cloud server.
