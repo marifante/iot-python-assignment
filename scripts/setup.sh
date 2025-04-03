@@ -10,4 +10,6 @@ source ./${VENV_NAME}/bin/activate
 
 pip3 install -e .
 
+pip3 install -r requirements-dev.txt
+
 echo "Virtual environment created with required dependencies"

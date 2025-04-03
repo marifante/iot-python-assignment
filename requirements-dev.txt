@@ -1,3 +1,5 @@
-autobahn
 asyncio
 pymodbus
+pytest
+pytest-asyncio
+pytest-mock

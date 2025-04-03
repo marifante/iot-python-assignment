@@ -44,7 +44,7 @@ def read_requirements(requirements_file: str) -> list:
 
 
 setup(
-    name="exporter-ecoadapt",
+    name="exporter_ecoadapt",
     version=git_version(),
     description="Tool used to communicate with Eco-Adapt Power Elect.",
     long_description=LONG_DESCRIPTION,
@@ -64,7 +64,7 @@ setup(
     packages=find_packages(where="src"),
     entry_points={
         "console_scripts": [
-            "exporter-ecoadapt=exporter_ecoadapt.cli:main",
+            "exporter_ecoadapt=exporter_ecoadapt.cli:main",
         ],
     },
     python_requires=">=3.7, <4",
