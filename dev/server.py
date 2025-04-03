@@ -68,7 +68,7 @@ def parse_args():
     """ Parse arguments given to this CLI. """
     parser = argparse.ArgumentParser(description="A local websocket server that receives and prints messages")
     parser.add_argument("--port", "-p", help="Port to serve (default 9000)", type=int, default=9000)
-    parser.add_argument("--addr", "-a", help="IP address to mount the serverPort to serve", type=int, required=True)
+    parser.add_argument("--addr", "-a", help="IP address to mount the serverPort to serve", type=str, required=True)
 
     return parser.parse_args()
 

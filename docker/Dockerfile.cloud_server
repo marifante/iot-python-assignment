@@ -6,4 +6,4 @@ COPY requirements-dev.txt dev/server.py /app/
 
 RUN pip install --no-cache-dir -r /app/requirements-dev.txt
 
-CMD ["python", "/app/server.py"]
+ENTRYPOINT ["python", "/app/server.py"]

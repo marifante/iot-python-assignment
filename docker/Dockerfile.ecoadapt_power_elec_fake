@@ -1,11 +1,9 @@
 FROM python:3.7.4-slim
 
-ARG MODBUS_IP
-
 WORKDIR /app
 
 COPY requirements-dev.txt dev/ecoadapt_power_elec_fake.py /app/
 
 RUN pip install --no-cache-dir -r /app/requirements-dev.txt
 
-CMD ["python", "/app/ecoadapt_power_elec_fake.py", "--addr", "${MODBUS_IP}"]
+ENTRYPOINT ["python", "/app/ecoadapt_power_elec_fake.py"]
