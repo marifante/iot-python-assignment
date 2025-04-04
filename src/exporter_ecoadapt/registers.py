@@ -30,7 +30,7 @@ def decode_software_version(data: list) -> str:
     :return: a string with the software version contained in the register.
     """
     if len(data) != 1:
-        raise ValueError("The length of this data register is different than 1! (not expected!)")
+        raise ValueError(f"The length of this data register is different than 1! ({len(data)} is not expected!)")
 
     raw_data = int(data[0])
     return f"{(raw_data >> 8) & 0xFF}.{raw_data & 0xFF}"
@@ -43,7 +43,7 @@ def decode_modbus_table_version(data: list) -> int:
     :return: an integer with the version contained in the register.
     """
     if len(data) != 1:
-        raise ValueError("The length of this data register is different than 1! (not expected!)")
+        raise ValueError(f"The length of this data register is different than 1! ({len(data)} is not expected!)")
 
     return int(data[0])
 
@@ -55,7 +55,7 @@ def decode_mac_address(data: list) -> str:
     :return: a string with the mac address contained in the register.
     """
     if len(data) != 3:
-        raise ValueError("The length of this data register is different than 3! (not expected!)")
+        raise ValueError(f"The length of this data register is different than 3! ({len(data)} is not expected!)")
 
     return f"{data[0]:04X}{data[1]:04X}{data[2]:04X}"
 
@@ -75,7 +75,7 @@ def decode_f32_circuit_info_data_register(data: list) -> tuple:
     The first element is the (connector 0, channel 0) and the last is the (connector 6, channel 3).
     """
     if len(data) != WORDS_IN_F32_CIRCUIT_INFO_REGISTERS:
-        raise ValueError(f"The length of this data register is different than {WORDS_IN_F32_CIRCUIT_INFO_REGISTERS}! (not expected!)")
+        raise ValueError(f"The length of this data register is different than {WORDS_IN_F32_CIRCUIT_INFO_REGISTERS}! ({len(data)} is not expected!)")
 
     decoded_data = list()
     for idx in range(0, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, 2):
@@ -83,6 +83,11 @@ def decode_f32_circuit_info_data_register(data: list) -> tuple:
         decoded_data.append( struct.unpack("!f", combined_int.to_bytes(length=4))[0] )
 
     return tuple(decoded_data)
+
+
+def do_not_decode(data: list) -> list:
+    """ Function used to specify when we should not decode the data. """
+    return data
 
 
 class EcoElec6Register(Enum):
@@ -98,7 +103,7 @@ class EcoElec6Register(Enum):
     MAC_ADDRESS                   = (2,   3, decode_mac_address)
 
     # Information per circuit
-    CIRCUIT_CONFIGURATION         = (8,   WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None) # We'll use the raw data that comes from this register
+    CIRCUIT_CONFIGURATION         = (8,   WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, do_not_decode) # We'll use the raw data that comes from this register
     ACTIVE_ENERGY_IMPORT_INDEX    = (28,  WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     REACTIVE_ENERGY_IMPORT_INDEX  = (64,  WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     ACTIVE_ENERGY_EXPORT_INDEX    = (100, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)

@@ -109,6 +109,11 @@ def test_decode_mac_address_bad_weather(input_registers_data):
             [0x94D6, 0x42FF]   * 18,
             (127.79069519042968757, ) * 18
         ),
+        (
+            [0x6666, 0x4248]        + [0]   * 34,
+            (50.099998474121094, )  + (0, ) * 17
+        ),
+
     ]
 )
 def test_decode_f32_circuit_info_data_register_good_weather(input_registers_data, expected_decoded_data):
