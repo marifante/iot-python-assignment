@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 class MyServerProtocol(WebSocketServerProtocol):
 
     def onConnect(self, request):
-        print("Client connecting: {0}".format(request.peer))
+        log.info("Client connecting: {0}".format(request.peer))
         # TODO Return a protocol here that matches the sender
         return ""
 

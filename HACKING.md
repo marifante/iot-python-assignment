@@ -35,8 +35,9 @@ To run the integration test we shall only run: `docker-compose up --build` from 
 
 3) Application layout.
 
-So, the application needs to do 2 things:
+So, the application needs to do 3 things:
 * Read data from modbus
+* Format the data in a nice format. I'll assume the scenario in which we prioritize the bandwidth and traffic, so I'll discard json or other text-based formats. I want to use a simple binary protocol which I already worked before, for that reason I used protobuf.
 * Send data to a cloud server
 
 This seems to be the case for a concurrent/parallel programming thing.
@@ -48,6 +49,8 @@ So, I'll create a simple application that runs 2 tasks in an asyncio loop:
 * Other task that will read the data from the queue and send it to the websocket.
 
 
-4) Bonus (CI/CD): Since I love to work with automated tests, I'll create a small GitHub actions pipeline to run the unit-tests of the application and some integration tests using the mocked cloud server.
+4) TODO list:
 
-
+* Compile protobuf schema at the moment of pip installation (to not forget to include compiling the schema in deliveries, manual action = error prone).
+* Add bad weather scenarios to cloud_client.py (I only added good_weather scenarios because mocking the behavior to raise an exception from an async context manager was not so straightforward).
+* Since I love to work in an environment where tests are automatically executed, would be nice to have here a small GitHub actions pipeline to run the tests in CI.

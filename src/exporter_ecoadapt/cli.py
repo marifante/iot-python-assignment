@@ -19,11 +19,11 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     cloud_group = parser.add_argument_group("cloud", "Cloud connection settings")
-    cloud_group.add_argument("--addr", required=True, type=str, help="The address of the cloud server to send the data to.")
+    cloud_group.add_argument("--cloud-addr", required=True, type=str, help="The address of the cloud server to send the data to.")
 
     modbus_group = parser.add_argument_group("modbus", "Modbus connection settings")
-    modbus_group.add_argument("--port", default=502, type=int, help="The Modbus port used to listen data from.")
-    modbus_group.add_argument("--addr", required=True, type=str, help="The Modbus IP address used to listen data from.")
+    modbus_group.add_argument("--modbus-port", default=502, type=int, help="The Modbus port used to listen data from.")
+    modbus_group.add_argument("--modbus-addr", required=True, type=str, help="The Modbus IP address used to listen data from.")
 
     parser.add_argument("--time-interval", default=10, type=int, help="Time interval between each read to the device.")
 
@@ -36,15 +36,23 @@ async def cli():
 
     log.info("Starting exporter-ecoadapt CLI!")
 
+    loop = asyncio.get_running_loop()
+
     exporter_eco_adapt = ExporterEcoAdapt(
-        cloud_url = args.cloud.addr,
-        modbus_addres = args.modbus.addr,
-        modbus_port = args.modbus.port,
-        read_time_interval_s = args.read_time_interval_s
+        cloud_url = args.cloud_addr,
+        modbus_address = args.modbus_addr,
+        modbus_port = args.modbus_port,
+        read_time_interval_s = args.time_interval,
+        loop=loop
     )
 
     await exporter_eco_adapt.run()
 
 
-if __name__ == "__main__":
+def main():
+    """ Synchronous wrapper to run the async CLI. """
     asyncio.run(cli())
+
+
+if __name__ == "__main__":
+    main()

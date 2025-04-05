@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// Struct with the data of a given circuit (pair connector/channel)
+message PowerElec6CircuitInfo {
+    uint32 connector = 1;
+    uint32 channel = 2;
+    uint32 configuration = 3;
+    float rms_voltage = 4;
+    float frequency = 5;
+}
+
+message PowerElec6Message {
+    string software_version = 1;
+    uint32 modbus_table_version = 2;
+    string mac_address = 3;
+
+    // Add an array for the information of each circuit
+    repeated PowerElec6CircuitInfo circuits_info = 4;
+}

@@ -80,7 +80,7 @@ def decode_f32_circuit_info_data_register(data: list) -> tuple:
     decoded_data = list()
     for idx in range(0, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, 2):
         combined_int = (data[idx] & 0xFFFF) | ((data[idx+1] << 16) & 0xFFFF0000)
-        decoded_data.append( struct.unpack("!f", combined_int.to_bytes(length=4))[0] )
+        decoded_data.append( struct.unpack("!f", combined_int.to_bytes(length=4, byteorder='big'))[0] )
 
     return tuple(decoded_data)
 
@@ -90,7 +90,7 @@ def do_not_decode(data: list) -> list:
     return data
 
 
-class EcoElec6Register(Enum):
+class PowerElec6Register(Enum):
     """ Enum with information about the input registers of Eco Elec 6 device.
     Each member has a tuple which information:
     * First member: The start of the register.
@@ -115,3 +115,15 @@ class EcoElec6Register(Enum):
     RMS_VOLTAGE                   = (352, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # We don't care about circuit information here (it is circuit or phase)
     RMS_VOLTAGE_1_MIN_AVERAGE     = (388, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # We don't care about circuit information here (it is circuit or phase)
     FREQUENCY                     = (424, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # In 3-phase all channels should report the same freq, otherwise each channel will report a different freq (don't make a distintion here)
+
+    def decode(self, data):
+        """ Decode the data using the specific function associated with this register.
+
+        :param data: data registers that will be decoded.
+        """
+        decode_function = self.value[2]
+
+        if decode_function is None:
+            raise NotImplemented(f"No decode function defined for {self.name}")
+
+        return decode_function(data)

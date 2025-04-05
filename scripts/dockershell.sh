@@ -38,7 +38,7 @@ while getopts "ron:" opt; do
 	esac
 done
 
-RUN_CMD="docker run --rm -it -v $(pwd):/host_repo -w /host_repo ${DOCKER_IMAGE_EXECUTED_LOCALLY} /bin/bash"
+RUN_CMD="docker run --entrypoint /bin/bash --rm -it -v $(pwd):/host_repo -w /host_repo ${DOCKER_IMAGE_EXECUTED_LOCALLY}"
 
 if [ "${REBUILD_IMAGE}" = "true" ]; then
 	log "erasing ${DOCKER_IMAGE_EXECUTED_LOCALLY}..."

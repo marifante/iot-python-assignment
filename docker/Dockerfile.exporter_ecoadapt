@@ -14,4 +14,4 @@ COPY requirements.txt README.md setup.py /app/
 
 RUN pip install -e /app
 
-CMD ["exporter-cli"]
+ENTRYPOINT ["exporter_ecoadapt"]
