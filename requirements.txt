@@ -1,1 +1,4 @@
-pymodbus
+pymodbus==2.5.3
+websockets==11.0.3
+protobuf==4.24.4
+Twisted==22.8.0

@@ -1,0 +1,17 @@
+FROM python:3.7.4-slim
+
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends git \
+    && apt-get clean \
+    && pip install --upgrade pip \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+COPY .git/ /app/.git
+
+COPY src/ /app/src
+
+COPY requirements.txt README.md setup.py /app/
+
+RUN pip install -e /app
+
+ENTRYPOINT ["exporter_ecoadapt"]
