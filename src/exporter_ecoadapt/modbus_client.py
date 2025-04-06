@@ -59,7 +59,7 @@ class EcoAdaptModbus:
         In case an error is detected during modbus reading, the exception will be handled
         and an empty tuple will be returned.
 
-        :return: a tuple with the information of each circuit of the Power Elec 6 device.
+        :return: a tuple with the information of Power Elec 6 device (general info and circuit info).
         """
         registers_data = list()
 
@@ -94,8 +94,8 @@ class EcoAdaptModbus:
         while True:
             registers = await self.read_registers()
             if registers:
-                await self._queue.put(self._format_data_funct(registers))  # Send data to the queue
+                await self._queue.put(self._format_data_funct(registers))
 
-            await asyncio.sleep(self._read_time_interval_s)  # Wait before next read
+            await asyncio.sleep(self._read_time_interval_s)
 
 

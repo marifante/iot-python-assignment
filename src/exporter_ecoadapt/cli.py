@@ -1,3 +1,6 @@
+"""
+Command Line Interface used to launch exporter_ecoadapt application.
+"""
 import logging
 import argparse
 import asyncio
@@ -15,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def parse_args():
     """ Parse arguments given to this CLI. """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Application used to read data from Power Elec 6 devices and export it to a cloud server.")
 
     cloud_group = parser.add_argument_group("cloud", "Cloud connection settings")
     cloud_group.add_argument("--cloud-addr", required=True, type=str, help="The address of the cloud server to send the data to.")
@@ -25,7 +28,7 @@ def parse_args():
     modbus_group.add_argument("--modbus-port", default=502, type=int, help="The Modbus port used to listen data from.")
     modbus_group.add_argument("--modbus-addr", required=True, type=str, help="The Modbus IP address used to listen data from.")
 
-    parser.add_argument("--time-interval", default=60, type=int, help="Time interval between each read to the device.")
+    parser.add_argument("--time-interval", default=60, type=int, help="Time interval between each read to the sensor.")
     parser.add_argument("--log-level", default="INFO", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Set logging level")
 
     return parser.parse_args()

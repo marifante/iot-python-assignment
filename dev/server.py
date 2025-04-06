@@ -57,7 +57,7 @@ def decode_protobuf_v1(payload: bytes):
     protobuf_msg = protobuf.PowerElec6Message()
     protobuf_msg.ParseFromString(payload)
 
-    msg2print = "RECEIVED_DATA = \n"
+    msg2print = "CLOUD SERVER RECEIVED DATA = \n"
     msg2print += f"SOFTWARE_VERSION = {protobuf_msg.software_version}, "
     msg2print += f"MODBUS_TABLE_VERSION = {protobuf_msg.modbus_table_version}, "
     msg2print += f"MAC_ADDRESS = {protobuf_msg.mac_address}\n"
@@ -77,7 +77,7 @@ class MyServerProtocol(WebSocketServerProtocol):
         self._received_data = list()
 
     def onConnect(self, request):
-        """ Handle that will be called when a client tires to connect to the websocket server.
+        """ Handle that will be called when a client tries to connect to the websocket server.
 
         Here the client inform us about the requested subprotocol to communicate and we
         check if that subprotocol is supported.

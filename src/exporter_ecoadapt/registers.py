@@ -63,16 +63,16 @@ def decode_mac_address(data: list) -> str:
 def decode_f32_circuit_info_data_register(data: list) -> tuple:
     """ Decode a circuit information float32 data register.
 
-    In some circuit information input registers there is the information of
-    all the circuits that the device can handle at the same time.
-    Each circuit is a pair (connector, channel), and we have 3 channels per connectors.
+    Some circuit information registers holds the information of all the circuits
+    that the device can handle at the same time.
+    Each circuit belongs to a pair (connector, channel) and we have 3 channels per connectors.
 
     Each circuit's value is encoded in float32, so we need to read 2 contiguous registers
     (each int16) to build a value.
-    a current/voltage value.
 
     :return: a tuple where each value corresponds to a given connector/channel.
-    The first element is the (connector 0, channel 0) and the last is the (connector 6, channel 3).
+    The first element is the circuit associated with (connector 0, channel 0) and the last is the one
+    associated with (connector 6, channel 3). The values are converted from hexa to float here.
     """
     if len(data) != WORDS_IN_F32_CIRCUIT_INFO_REGISTERS:
         raise ValueError(f"The length of this data register is different than {WORDS_IN_F32_CIRCUIT_INFO_REGISTERS}! ({len(data)} is not expected!)")
@@ -109,7 +109,8 @@ class PowerElec6Register(Enum):
     ACTIVE_ENERGY_EXPORT_INDEX    = (100, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     REACTIVE_ENERGY_EXPORT_INDEX  = (136, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     ACTIVE_POWER                  = (172, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
-    REACTIVE_POWER                = (244, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
+    REACTIVE_POWER                = (208, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
+    POWER_FACTOR                  = (244, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     RMS_CURRENT                   = (280, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # We don't care about circuit information here (it is circuit or phase)
     RMS_CURRENT_1_MIN_AVERAGE     = (316, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # We don't care about circuit information here (it is circuit or phase)
     RMS_VOLTAGE                   = (352, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, decode_f32_circuit_info_data_register) # We don't care about circuit information here (it is circuit or phase)

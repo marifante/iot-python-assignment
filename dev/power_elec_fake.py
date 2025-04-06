@@ -31,7 +31,7 @@ ROTATED_DATA = [
 
         # Information per circuit (6 circuits, 3 channels/circuit = 18 channels)
         9:   [ 0x0002 ] * 18,                       # Circuit configuration (from 8 to 25, 16-bit word per channel)
-        10:  [ 0x0, 0x0 ] * 18,                     # [kWh] Active energy import index (from 28 to 63, float32 per channel)
+        29:  [ 0x0, 0x0 ] * 18,                     # [kWh] Active energy import index (from 28 to 63, float32 per channel)
         65:  [ 0x0, 0x0 ] * 18,                     # [kVArh] Reactive energy import index (from 64 to 99, float32 per channel)
         101: [ 0x0, 0x0 ] * 18,                     # [kWh] Active energy export index (from 100 to 135, float32 per channel)
         137: [ 0x0, 0x0 ] * 18,                     # [kVArh] Reactive energy export index (from 136 to 171, float32 per channel)
@@ -50,7 +50,7 @@ ROTATED_DATA = [
         3: [ 0x000A, 0x000B, 0x000C ],
 
         9:   [ 0x0002 ] * 6 + [ 0 ] * 5 + [ 0x0001 ] * 3 + [ 0 ] * 4,
-        10:  [ 0x0, 0x0 ] * 18,
+        29:  [ 0x0, 0x0 ] * 18,
         65:  [ 0x0, 0x0 ] * 18,
         101: [ 0x0, 0x0 ] * 18,
         137: [ 0x0, 0x0 ] * 18,
@@ -69,7 +69,7 @@ ROTATED_DATA = [
         3: [ 0x000A, 0x000B, 0x000C ],
 
         9:   [ 0x0002 ] * 6 + [ 0 ] * 5 + [ 0x0001 ] * 3 + [ 0 ] * 3 + [0x2],
-        10:  [ 0x0, 0x0 ] * 18,
+        29:  [ 0x0, 0x0 ] * 18,
         65:  [ 0x0, 0x0 ] * 18,
         101: [ 0x0, 0x0 ] * 18,
         137: [ 0x0, 0x0 ] * 18,
@@ -86,7 +86,6 @@ ROTATED_DATA = [
 
 
 _DEFAULT_REGISTERS_DICT = ROTATED_DATA[0]
-
 
 
 DEFAULT_REGISTERS = ModbusSparseDataBlock(_DEFAULT_REGISTERS_DICT)
@@ -111,7 +110,7 @@ class PowerElec6Fake():
 
         self._setup_modbus_server()
 
-        # Start the timer to update registers every 50 seconds
+        # Start the timer to update registers every rotate_time_s seconds
         self._start_timer()
 
     def _setup_modbus_server(self):
@@ -138,7 +137,6 @@ class PowerElec6Fake():
 
         self.context = ModbusServerContext(slaves=store, single=True)
 
-        # Set up server identity information (optional)
         self.identity = ModbusDeviceIdentification()
         self.identity.VendorName = "MockModbusServer"
         self.identity.ProductCode = "MMS1"
@@ -161,7 +159,7 @@ class PowerElec6Fake():
         self.current_data_index = (self.current_data_index + 1) % len(ROTATED_DATA)
         log.info(f"Updating register values to set {self.current_data_index}...")
         for key, val in ROTATED_DATA[self.current_data_index].items():
-            addr = key - 1 # ModbusSparseDataBlock keys have an offset of 1 on their addresses
+            addr = key - 1 
             self.context[0].setValues(4, addr, val)
         self._print_all_registers()
         self._start_timer() # Restart the timer
@@ -172,7 +170,6 @@ class PowerElec6Fake():
 
     def start_modbus_server(self):
         """ Start modbus server in the configured port and ip. """
-        # Start the Modbus TCP server on port 502
         log.info(f"Starting Mock Modbus TCP Server on {self.ip}:{self.port}...")
         StartTcpServer(self.context, identity=self.identity, address=(self.ip, self.port))
 

@@ -29,7 +29,7 @@ def format_websocket_url(url: str, port: int) -> str:
         r'(:[0-9]{1,5})?'  # Optional port number
         r'(/.*)?$'  # Optional path
     )
-    if not  re.match(websocket_url_regex, url):
+    if not re.match(websocket_url_regex, url):
         raise ValueError(f"The combination {url} & {port} is not a valid for a websocket")
 
     return full_url
@@ -39,7 +39,7 @@ class WebSocketClient:
     def __init__(self, url: str, port: int, queue: asyncio.queues.Queue, subprotocol: str):
         """ Initialize the WebSocket client with the server URL.
 
-        :param url: server URL (it should contain the protocol (ws or wss) and the IP address).
+        :param url: server URL, it should contain the protocol (ws or wss) and the IP address.
         :param port: server port.
         :param queue: asyncio queue where the data that will be sent to the server is stored.
         :param subprotocol: subprotocol used to communicate with the cloud server.

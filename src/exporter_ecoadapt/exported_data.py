@@ -4,11 +4,12 @@ that can be sent to the cloud server.
 The data of the device that will be push to the cloud server is already fixed
 by protobuf .proto file. So we don't need to some dynamic fancy logic here.
 The idea is to maintain in this file all the knowledge about what information
-is sent to the server.
+is sent to the server and how it is formatted.
 """
 import logging
 import exporter_ecoadapt.generated.power_elec6_message_pb2 as protobuf
 from exporter_ecoadapt.registers import PowerElec6Register
+
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ SUBPROTOCOL_NAME="exporter_ecodata_protobuf_v1"
 
 
 def _format_circuit_data(unordered_circuit_data: dict) -> list:
-    """ Take a dictionary with raw data from the device and separate it
+    """ Take a dictionary with raw circuit info data from the device and separate it
     by connector and channel.
 
     :param unordered_circuit_data: a dictionary with the following format, where
@@ -113,7 +114,7 @@ def create_pretty_string_protobuf_v1(protobuf_struct) -> str:
 
     :param protobuf_struct: the protobuf struct.
     """
-    msg2print = "RECEIVED_DATA = \n"
+    msg2print = "EXPORTER ECOADAPT RECEIVED DATA = \n"
     msg2print += f"SOFTWARE_VERSION = {protobuf_struct.software_version}, "
     msg2print += f"MODBUS_TABLE_VERSION = {protobuf_struct.modbus_table_version}, "
     msg2print += f"MAC_ADDRESS = {protobuf_struct.mac_address}\n"
