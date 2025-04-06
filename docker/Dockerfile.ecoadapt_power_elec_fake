@@ -1,9 +1,0 @@
-FROM python:3.7.4-slim
-
-WORKDIR /app
-
-COPY requirements-dev.txt dev/ecoadapt_power_elec_fake.py /app/
-
-RUN pip install --no-cache-dir -r /app/requirements-dev.txt
-
-ENTRYPOINT ["python", "/app/ecoadapt_power_elec_fake.py"]

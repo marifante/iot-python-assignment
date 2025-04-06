@@ -9,7 +9,6 @@ FORMAT = (
     "%(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
 )
 
-logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 log = logging.getLogger(__name__)
 
@@ -20,12 +19,14 @@ def parse_args():
 
     cloud_group = parser.add_argument_group("cloud", "Cloud connection settings")
     cloud_group.add_argument("--cloud-addr", required=True, type=str, help="The address of the cloud server to send the data to.")
+    cloud_group.add_argument("--cloud-port", required=True, type=int, help="The port of the cloud server to send the data to.")
 
     modbus_group = parser.add_argument_group("modbus", "Modbus connection settings")
     modbus_group.add_argument("--modbus-port", default=502, type=int, help="The Modbus port used to listen data from.")
     modbus_group.add_argument("--modbus-addr", required=True, type=str, help="The Modbus IP address used to listen data from.")
 
-    parser.add_argument("--time-interval", default=10, type=int, help="Time interval between each read to the device.")
+    parser.add_argument("--time-interval", default=60, type=int, help="Time interval between each read to the device.")
+    parser.add_argument("--log-level", default="INFO", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], help="Set logging level")
 
     return parser.parse_args()
 
@@ -34,12 +35,15 @@ async def cli():
     """ Main Command Line Interface tool entrypoint. """
     args = parse_args()
 
+    logging.basicConfig(format=FORMAT, level=args.log_level)
+
     log.info("Starting exporter-ecoadapt CLI!")
 
     loop = asyncio.get_running_loop()
 
     exporter_eco_adapt = ExporterEcoAdapt(
         cloud_url = args.cloud_addr,
+        cloud_port = args.cloud_port,
         modbus_address = args.modbus_addr,
         modbus_port = args.modbus_port,
         read_time_interval_s = args.time_interval,

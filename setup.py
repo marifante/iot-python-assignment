@@ -1,7 +1,10 @@
 import shlex
 from subprocess import check_output, CalledProcessError
 from setuptools import setup, find_packages
+import datetime
 
+
+DEFAULT_VERSION=f"99.99.99+devdirty"
 
 LONG_DESCRIPTION="""
 This package contains a python library and a command line to extract data from [Eco-Adapt Power Elec 3 or 6](https://www.eco-adapt.com/products/)
@@ -26,9 +29,11 @@ def git_version() -> str:
     cmd = 'git describe --tags --always --dirty --match v[0-9]*'
     try:
         git_version = check_output(shlex.split(cmd)).decode('utf-8').strip()[1:]
+        version = git_to_pep440(git_version)
     except CalledProcessError as e:
-        raise Exception('Could not get git version') from e
-    return git_to_pep440(git_version)
+        print(f'Could not get git version, using a default version ({e})')
+        version = DEFAULT_VERSION + "." + datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    return version
 
 
 def read_requirements(requirements_file: str) -> list:

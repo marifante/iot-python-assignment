@@ -19,11 +19,12 @@ class ExporterEcoAdapt:
     """ Class that can gather data from a Power Elec 6 through ModBus and
     push that data to a cloud server using websockets.
     """
-    def __init__(self, cloud_url: str, modbus_address: str, modbus_port: int,
+    def __init__(self, cloud_url: str, cloud_port:int, modbus_address: str, modbus_port: int,
                  read_time_interval_s: int, loop: asyncio.AbstractEventLoop):
         """ Exporter Eco Adapt constructor.
 
         :param cloud_url: the URL of the cloud server where the data will be sent.
+        :param cloud_port: the port of the cloud server where the data will be sent.
         :param modbus_address: Modbus IP address.
         :param modbus_port: Modbus port.
         :param read_time_interval_s: time interval between each read to the modbus device.
@@ -32,7 +33,7 @@ class ExporterEcoAdapt:
         self._loop = loop
         self._queue = asyncio.Queue(loop=self._loop)
 
-        self._cloud_client = WebSocketClient(cloud_url, self._queue)
+        self._cloud_client = WebSocketClient(cloud_url, cloud_port, self._queue, exported_data.SUBPROTOCOL_NAME)
         self._modbus_client = EcoAdaptModbus(modbus_address, modbus_port,
                                              read_time_interval_s, self._queue,
                                              exported_data.DEVICE_GENERAL_DATA_REGISTERS,

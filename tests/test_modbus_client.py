@@ -8,6 +8,21 @@ from exporter_ecoadapt.modbus_client import EcoAdaptModbus
 import exporter_ecoadapt.exported_data as exported_data
 
 
+class FakeExceptionResponse(Exception):
+    def __init__(self, function_code, exception_code=None):
+        """ Fake modbus exception response.
+
+        Sometimes read_input_registers returns an exception (doesn't raise it).
+            For example: ExceptionResponse(132, 4, IllegalAddress)
+
+        :param function_code: The function to build an exception response for
+        :param exception_code: The specific modbus exception to return
+        """
+        self.original_code = function_code
+        self.function_code = function_code | 0x80
+        self.exception_code = exception_code
+
+
 @pytest.fixture
 def queue():
     return asyncio.Queue()
@@ -19,23 +34,25 @@ def format_data_funct():
 
 
 @pytest.fixture
-def eco_adapt_modbus(queue, format_data_funct):
+def eco_adapt_modbus(queue, format_data_funct, event_loop):
     address = '127.0.0.1'
     port = 502
     read_time_interval_s = 1
     general_data_registers = exported_data.DEVICE_GENERAL_DATA_REGISTERS
     circuits_data_registers = exported_data.DEVICE_CIRCUIT_DATA_REGISTERS
     return EcoAdaptModbus(address, port, read_time_interval_s, queue,
-                          general_data_registers, circuits_data_registers, format_data_funct)
+                          general_data_registers, circuits_data_registers, format_data_funct, event_loop)
 
 
 @pytest.fixture
 def mocked_modbus_client():
     """ Mock modbus client library with async mocks. """
-    mock_client = Mock()
+    mock_client = CoroutineMock()
     with patch("exporter_ecoadapt.modbus_client.ModbusClient", return_value=mock_client):
-        mock_client.connect = CoroutineMock(return_value=True)
-        mock_client.close = MagicMock(return_value=True)
+        mock_client.start = CoroutineMock(return_value=True)
+        mock_client.protocol.transport.close = MagicMock(return_value=True)
+        mock_client.protocol = MagicMock()
+        mock_client.protocol.read_input_registers = CoroutineMock()
         yield mock_client
 
 
@@ -80,7 +97,7 @@ async def test_read_registers_good_weather(eco_adapt_modbus, mocked_modbus_clien
     # Arrange: Mock the response of the modbus client
     mocked_input_registers = mocked_registers_data[0]
     expected_registers_data = mocked_registers_data[1]
-    mocked_modbus_client.read_input_registers = CoroutineMock(side_effect=mocked_input_registers)
+    mocked_modbus_client.protocol.read_input_registers.side_effect = mocked_input_registers
 
     # Act: read the data using modbus lib but mocked
     registers_data = await eco_adapt_modbus.read_registers()
@@ -92,10 +109,24 @@ async def test_read_registers_good_weather(eco_adapt_modbus, mocked_modbus_clien
 
 
 @pytest.mark.asyncio
-async def test_read_registers_bad_weather(eco_adapt_modbus, mocked_modbus_client):
+async def test_read_registers_raise_exc_bad_weather(eco_adapt_modbus, mocked_modbus_client):
     """ Mock a failure in modbus client (an exception should be arised, pymodbus is responsible by it). """
     # Arrange: Mock pymodbus method to read input registers, forcing an exception
-    mocked_modbus_client.read_input_registers = Mock(side_effect=Exception("Modbus read failed"))
+    mocked_modbus_client.protocol.read_input_registers.side_effect = MagicMock(side_effect=Exception("Modbus read failed"))
+
+    # Act: read the data using modbus lib but mocked
+    registers_data = await eco_adapt_modbus.read_registers()
+
+    # Assert: Check if an empty tuple was returned
+    assert len(registers_data) == 0
+
+
+@pytest.mark.asyncio
+async def test_read_registers_return_exc_bad_weather(eco_adapt_modbus, mocked_modbus_client):
+    """ Mock a situation in which we cannot read the register but modbus lib returns an exception.
+    It doesn't raise it (which is weird). """
+    # Arrange: Mock pymodbus method to read input registers, forcing to return an exception
+    mocked_modbus_client.protocol.read_input_registers.return_value = FakeExceptionResponse(132, 4)
 
     # Act: read the data using modbus lib but mocked
     registers_data = await eco_adapt_modbus.read_registers()
@@ -109,7 +140,7 @@ async def test_periodic_task_good_weather(eco_adapt_modbus, mocked_modbus_client
     """ Test the async task used to read data from the device periodically. """
     # Arrange: Mock the response from modbus client and then create the task
     mocked_input_registers = mocked_registers_data[0]
-    mocked_modbus_client.read_input_registers = CoroutineMock(side_effect=mocked_input_registers)
+    mocked_modbus_client.protocol.read_input_registers.side_effect = mocked_input_registers
 
     task = asyncio.create_task(eco_adapt_modbus.task())
 
@@ -130,7 +161,7 @@ async def test_task_bad_weather(eco_adapt_modbus, mocked_modbus_client, queue):
     (an exception should be arised, pymodbus is responsible by it).
     """
     # Arrange: Mock a failure in modbus client read registers method
-    mocked_modbus_client.read_input_registers = Mock(side_effect=Exception("Modbus read failed (error type X)"))
+    mocked_modbus_client.protocol.read_input_registers.side_effect = Exception("Modbus read failed (error type X)")
 
     task = asyncio.create_task(eco_adapt_modbus.task())
 

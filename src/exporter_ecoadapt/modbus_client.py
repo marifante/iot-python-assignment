@@ -9,8 +9,9 @@ import asyncio
 import logging
 from typing import Callable
 
-from pymodbus.client.asynchronous.tcp import AsyncModbusTCPClient as ModbusClient
-from pymodbus.client.asynchronous import schedulers
+from pymodbus.client.asynchronous.async_io import ReconnectingAsyncioModbusTcpClient as ModbusClient
+from pymodbus.pdu import ExceptionResponse
+
 
 log = logging.getLogger(__name__)
 
@@ -62,30 +63,29 @@ class EcoAdaptModbus:
         """
         registers_data = list()
 
-        log.info("Setting up client")
-        _, client = ModbusClient(schedulers.ASYNC_IO, host=self._address, port=self._port,
-                                 loop=self._loop)
+        client = ModbusClient(loop=self._loop)
 
-        try:
-            log.info("Connecting to modbus device on {self._address}")
-            await asyncio.wait_for(client.protocol.connect(), self._connect_timeout)
+        log.info(f"Attempting to connect to {self._address}:{self._port}")
+        await client.start(host=self._address, port=self._port)
 
-            log.info(f"Reading registers: {', '.join([x.name for x in self._data_registers_to_export])}")
+        if client.protocol:
+            try:
+                log.info(f"Reading registers: " + ", ".join([f"{x.name} ({x.value[0]}, {x.value[1]})" for x in self._data_registers_to_export]))
+                for r in self._data_registers_to_export:
+                    resp = await client.protocol.read_input_registers(address=r.value[0], count=r.value[1], slave=1)
 
-            for r in self._data_registers_to_export:
-                resp = await client.protocol.read_input_registers(address=r.value[0], count=r.value[1], slave=1)
-                registers_data.append((r, resp.registers, ))
-                log.info(f"{r.name} {r.value[0], r.value[1]}: {resp}: {resp.registers}")
+                    if isinstance(resp, ExceptionResponse):
+                        raise RuntimeError(f"Cannot read register {r.name}, obtained exception response {resp}. Aborting this read.")
+                    else:
+                        registers_data.append((r, resp.registers, ))
+                        log.info(f"{r.name} {r.value[0], r.value[1]}: {resp}: {resp.registers}")
 
-        except asyncio.TimeoutError:
-            log.warning(f"Connection timed out after {self._connect_timeout} seconds")
-            registers_data = []
-        except Exception as e:
-            log.error(f"Exception '{e}' occurred during modbus reading.")
-            registers_data = []
+                log.info("Closing client")
+                client.protocol.transport.close()
 
-        log.info("Closing client")
-        client.protocol.close()
+            except Exception as e:
+                log.error(f"Exception '{e}' occurred during modbus reading.")
+                registers_data = []
 
         return tuple(registers_data)
 

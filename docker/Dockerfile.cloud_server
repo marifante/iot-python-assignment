@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY requirements-dev.txt dev/server.py /app/
 
+COPY src/exporter_ecoadapt/generated/power_elec6_message_pb2.py /app/power_elec6_message_pb2.py
+
 RUN pip install --no-cache-dir -r /app/requirements-dev.txt
 
 ENTRYPOINT ["python", "/app/server.py"]

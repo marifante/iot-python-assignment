@@ -2,7 +2,7 @@ import asyncio
 import pytest
 from asynctest.mock import CoroutineMock
 from asynctest import patch
-from exporter_ecoadapt.cloud_client import WebSocketClient
+from exporter_ecoadapt.cloud_client import WebSocketClient, format_websocket_url
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def queue():
 @pytest.fixture
 def websocket_client(queue):
     url = 'ws://example.com/websocket'
-    return WebSocketClient(url, queue)
+    return WebSocketClient(url, 8000, queue, "fake_subprotocol")
 
 
 @pytest.mark.asyncio
@@ -42,7 +42,7 @@ async def test_send_message_good_weather(websocket_client):
         await websocket_client.send_message(message)
 
         # Assert: check if the expected calls occurred
-        mock_connect.assert_called_once_with(websocket_client.url)
+        mock_connect.assert_called_once_with(websocket_client._full_url, subprotocols=["fake_subprotocol"])
         mock_connect.return_value.__aenter__.return_value.send.assert_called_once_with(message)
         mock_connect.return_value.__aenter__.return_value.recv.assert_called_once()
         assert mock_connect.return_value.__aenter__.return_value.recv.return_value == b"Server response"
@@ -77,9 +77,33 @@ async def test_task_good_weather(websocket_client, queue):
         task.cancel()
 
         # Assert: check that the message was sent to the server.
-        mock_connect.assert_called_once_with(websocket_client.url)
+        mock_connect.assert_called_once_with(websocket_client._full_url, subprotocols=["fake_subprotocol"])
         mock_connect.return_value.__aenter__.return_value.send.assert_called_once_with(message)
         mock_connect.return_value.__aenter__.return_value.recv.assert_called_once()
         assert mock_connect.return_value.__aenter__.return_value.recv.return_value == b"Server response"
 
 
+@pytest.mark.parametrize("url,port,expected", [
+    # Good weather scenarios
+    ("ws://example.com", 8080, "ws://example.com:8080"),
+    ("wss://example.com", 8443, "wss://example.com:8443"),
+    ("ws://192.168.1.1", 12345, "ws://192.168.1.1:12345"),
+    ("wss://sub.domain.com", 443, "wss://sub.domain.com:443"),
+    ("ws://example.com", 0, "ws://example.com:0"),
+    ("wss://example.com", 65535, "wss://example.com:65535"),
+])
+def test_format_websocket_url_valid(url, port, expected):
+    assert format_websocket_url(url, port) == expected
+
+@pytest.mark.parametrize("url,port", [
+    # Bad weather scenarios
+    ("http://example.com", 8080),  # Invalid protocol
+    ("ftp://example.com", 21),     # Invalid protocol
+    ("wss://example.com", -1),     # Invalid port
+    ("ws://example.com", 65536),   # Port out of range
+    ("example.com", 8080),         # Missing protocol
+    ("ws://", 8080),               # Missing domain
+])
+def test_format_websocket_url_invalid(url, port):
+    with pytest.raises(ValueError):
+        format_websocket_url(url, port)

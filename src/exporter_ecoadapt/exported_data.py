@@ -28,6 +28,9 @@ DEVICE_CIRCUIT_DATA_REGISTERS = (
                                 )
 
 
+SUBPROTOCOL_NAME="exporter_ecodata_protobuf_v1"
+
+
 def _format_circuit_data(unordered_circuit_data: dict) -> list:
     """ Take a dictionary with raw data from the device and separate it
     by connector and channel.
@@ -49,7 +52,6 @@ def _format_circuit_data(unordered_circuit_data: dict) -> list:
     for idx in range(0, len(unordered_circuit_data[PowerElec6Register.CIRCUIT_CONFIGURATION.name])):
         connector = idx // 3 + 1
         channel = idx % 3 + 1
-        log.debug(f"Adding data for connector {connector} channel {channel}")
 
         formatted_data.append(
             protobuf.PowerElec6CircuitInfo(
@@ -62,6 +64,7 @@ def _format_circuit_data(unordered_circuit_data: dict) -> list:
         )
 
     return formatted_data
+
 
 def create_protobuf_struct(registers_data: tuple) -> protobuf.PowerElec6Message:
     """ Create a protobuf struct with the data from PowerElec 6 device.
@@ -100,11 +103,27 @@ def create_protobuf_struct(registers_data: tuple) -> protobuf.PowerElec6Message:
     for reg in registers_data:
         unordered_circuit_data[ reg[0].name ] = reg[0].decode(reg[1])
 
-    log.info(f"unordered_circuit_data = {unordered_circuit_data}")
     message.circuits_info.extend( _format_circuit_data(unordered_circuit_data) )
 
-    log.info(f"len(message.circuits_info) = {message.circuits_info}")
     return message
+
+
+def create_pretty_string_protobuf_v1(protobuf_struct) -> str:
+    """ Create a pretty string to print with the content of a protobuf v1 packet.
+
+    :param protobuf_struct: the protobuf struct.
+    """
+    msg2print = "RECEIVED_DATA = \n"
+    msg2print += f"SOFTWARE_VERSION = {protobuf_struct.software_version}, "
+    msg2print += f"MODBUS_TABLE_VERSION = {protobuf_struct.modbus_table_version}, "
+    msg2print += f"MAC_ADDRESS = {protobuf_struct.mac_address}\n"
+
+    for idx, ci in enumerate(protobuf_struct.circuits_info):
+        msg2print += f"({ci.connector:2}, {ci.channel:2}, 0x{ci.configuration:04X}, {ci.rms_voltage:12.8f} V, {ci.frequency:12.8f} Hz)"
+        msg2print += "\n" if (idx + 1) % 3 == 0 else ", "
+
+    return msg2print
+
 
 def create_binary_packet(registers_data: tuple) -> bytes:
     """ Create a protobuf binary packet with the data stored in device's data registers.
@@ -124,4 +143,6 @@ def create_binary_packet(registers_data: tuple) -> bytes:
 
     :return: the protobuf binary packet.
     """
-    return create_protobuf_struct(registers_data).SerializeToString()
+    protobuf_struct = create_protobuf_struct(registers_data)
+    log.info(create_pretty_string_protobuf_v1(protobuf_struct))
+    return protobuf_struct.SerializeToString()

@@ -2,14 +2,14 @@ version: "3.8"
 
 services:
 
-  ecoadapt_power_elec:
+  fake_power_elec:
     build:
       context: .
-      dockerfile: docker/Dockerfile.ecoadapt_power_elec_fake
+      dockerfile: docker/Dockerfile.power_elec_fake
     networks:
       custom_network:
         ipv4_address: 172.18.0.2
-    command: ["--addr", "172.18.0.2"]
+    command: ["--addr", "172.18.0.2", "--rotate-time", "50"]
 
   cloud_server:
     build:
@@ -27,7 +27,7 @@ services:
     networks:
       custom_network:
         ipv4_address: 172.18.0.3
-    command: ["--cloud-addr", "172.18.0.4", "--modbus-addr", "172.18.0.2", "--modbus-port", "502"]
+    command: ["--cloud-addr", "ws://172.18.0.4", "--cloud-port", "9000", "--modbus-addr", "172.18.0.2", "--modbus-port", "502", "--log-level", "${LOG_LEVEL:-INFO}", "--time-interval", "60"]
 
 networks:
   custom_network:

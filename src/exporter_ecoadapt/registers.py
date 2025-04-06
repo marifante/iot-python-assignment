@@ -85,9 +85,9 @@ def decode_f32_circuit_info_data_register(data: list) -> tuple:
     return tuple(decoded_data)
 
 
-def do_not_decode(data: list) -> list:
+def do_not_decode(data: list) -> tuple:
     """ Function used to specify when we should not decode the data. """
-    return data
+    return tuple(data)
 
 
 class PowerElec6Register(Enum):
@@ -103,7 +103,7 @@ class PowerElec6Register(Enum):
     MAC_ADDRESS                   = (2,   3, decode_mac_address)
 
     # Information per circuit
-    CIRCUIT_CONFIGURATION         = (8,   WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, do_not_decode) # We'll use the raw data that comes from this register
+    CIRCUIT_CONFIGURATION         = (8,   18,                                  do_not_decode) # We'll use the raw data that comes from this register
     ACTIVE_ENERGY_IMPORT_INDEX    = (28,  WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     REACTIVE_ENERGY_IMPORT_INDEX  = (64,  WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
     ACTIVE_ENERGY_EXPORT_INDEX    = (100, WORDS_IN_F32_CIRCUIT_INFO_REGISTERS, None)
